@@ -33,12 +33,19 @@ namespace Unity.RenderStreaming.Editor
 
         private void OnEnable()
         {
+            EditorApplication.projectChanged += OnProjectChanged;
+
             m_UseDefault = serializedObject.FindProperty(SignalingManager.UseDefaultPropertyName);
             m_SignalingSettingsObject = serializedObject.FindProperty(SignalingManager.SignalingSettingsObjectPropertyName);
             m_SignalingSettings = serializedObject.FindProperty(SignalingManager.SignalingSettingsPropertyName);
             m_Handlers = serializedObject.FindProperty(SignalingManager.HandlersPropertyName);
             m_RunOnAwake = serializedObject.FindProperty(SignalingManager.RunOnAwakePropertyName);
             m_EvaluateCommandlineArguments = serializedObject.FindProperty(SignalingManager.EvaluateCommandlineArgumentsPropertyName);
+        }
+
+        private void OnDisable()
+        {
+            EditorApplication.projectChanged -= OnProjectChanged;
         }
 
         public override VisualElement CreateInspectorGUI()
@@ -72,8 +79,6 @@ namespace Unity.RenderStreaming.Editor
             root.Add(new PropertyField(m_RunOnAwake, "Run On Awake"));
             root.Add(new PropertyField(m_EvaluateCommandlineArguments, "Evaluate Commandline Arguments"));
 
-            EditorApplication.projectChanged += OnProjectChanged;
-
             // Disable UI when running in Playmode
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
             if (EditorApplication.isPlaying)
@@ -87,6 +92,7 @@ namespace Unity.RenderStreaming.Editor
             var paths = GetAvailableSignalingSettingsPath();
 
             var field = new PopupField<SignalingSettingsObject>(label: label);
+            field.tooltip = "Choose the signaling settings.";
             field.formatSelectedValueCallback = v => AssetDatabase.GetAssetPath(v);
             field.formatListItemCallback = v => AssetDatabase.GetAssetPath(v);
             if (paths.Length == 0)
@@ -146,6 +152,8 @@ namespace Unity.RenderStreaming.Editor
 
         private void OnProjectChanged()
         {
+            if (root == null)
+                return;
             var paths = GetAvailableSignalingSettingsPath();
 
             // Force to use default settings if there are no available settings in project folder.
@@ -168,7 +176,6 @@ namespace Unity.RenderStreaming.Editor
             }
             signalingSettingsPopupField.choices = availableObjects.ToList();
             signalingSettingsPopupField.index = defaultIndex;
-
         }
 
         private void OnClickedOpenProjectSettingsButton()

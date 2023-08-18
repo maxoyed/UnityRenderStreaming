@@ -24,7 +24,7 @@ namespace Unity.RenderStreaming
         internal const string EvaluateCommandlineArgumentsPropertyName = nameof(evaluateCommandlineArguments);
 
 #pragma warning disable 0649
-        [SerializeField]
+        [SerializeField, Tooltip("Use settings in Project Settings Window.")]
         private bool m_useDefault = true;
 
         [SerializeField]
@@ -54,6 +54,9 @@ namespace Unity.RenderStreaming
         private SignalingEventProvider m_provider;
         private bool m_running;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public bool Running => m_running;
 
         static ISignaling CreateSignaling(SignalingSettings settings, SynchronizationContext context)
@@ -278,7 +281,13 @@ namespace Unity.RenderStreaming
                 return;
 
             var settings = m_useDefault ? RenderStreaming.GetSignalingSettings<SignalingSettings>() : signalingSettings;
-            RTCIceServer[] iceServers = settings.iceServers.OfType<RTCIceServer>().ToArray();
+            int i = 0;
+            RTCIceServer[] iceServers = new RTCIceServer[settings.iceServers.Count()];
+            foreach (var iceServer in settings.iceServers)
+            {
+                iceServers[i] = (RTCIceServer)iceServer;
+                i++;
+            }
             RTCConfiguration conf = new RTCConfiguration { iceServers = iceServers };
             ISignaling signaling = CreateSignaling(settings, SynchronizationContext.Current);
             _Run(conf, signaling, handlers.ToArray());
